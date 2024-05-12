@@ -31,15 +31,55 @@ fn build_scores_table(results: String) -> HashMap<String, Team> {
 
     for r in results.lines() {
         let v: Vec<&str> = r.split(',').collect();
-        let team_1_name = v[0].to_string();
-        let team_1_score: u8 = v[2].parse().unwrap();
-        let team_2_name = v[1].to_string();
-        let team_2_score: u8 = v[3].parse().unwrap();
-        // TODO: Populate the scores table with details extracted from the
+        let team1_name = v[0].to_string();
+        let team1_score: u8 = v[2].parse().unwrap();
+        let team2_name = v[1].to_string();
+        let team2_score: u8 = v[3].parse().unwrap();
+        // Populate the scores table with details extracted from the
         // current line. Keep in mind that goals scored by team_1
         // will be the number of goals conceded by team_2, and similarly
         // goals scored by team_2 will be the number of goals conceded by
         // team_1.
+
+        scores.entry(team1_name).and_modify(
+            |team| *team.goals_scored += team1_score
+        ).and_modify(
+            |team| *team.goals_conceded += team2_score
+        ).or_insert(
+            Team {
+                goals_scored: team1_score,
+                goals_conceded: team2_score
+            }
+        );
+
+        // scores.insert(
+        //     team1_name,
+        //     Team {
+        //         goals_scored: team1_score,
+        //         goals_conceded: team2_score
+        //     }
+        // );
+
+        scores.insert(
+            team2_name,
+            Team {
+                goals_scored: team2_score,
+                goals_conceded: team1_score
+            }
+        );
+
+        // scores.entry(team1_name).or_insert(
+        //     Team {
+        //         goals_scored: team1_score,
+        //         goals_conceded: team2_score
+        //     }
+        // );
+        // scores.entry(team2_name).or_insert(
+        //     Team {
+        //         goals_scored: team2_score,
+        //         goals_conceded: team1_score
+        //     }
+        // );
     }
     scores
 }
@@ -70,7 +110,7 @@ mod tests {
     }
 
     #[test]
-    fn validate_team_score_1() {
+    fn validate_team_score_england() {
         let scores = build_scores_table(get_results());
         let team = scores.get("England").unwrap();
         assert_eq!(team.goals_scored, 5);
@@ -78,7 +118,15 @@ mod tests {
     }
 
     #[test]
-    fn validate_team_score_2() {
+    fn validate_team_score_france() {
+        let scores = build_scores_table(get_results());
+        let team = scores.get("France").unwrap();
+        assert_eq!(team.goals_scored, 5);
+        assert_eq!(team.goals_conceded, 5);
+    }
+
+    #[test]
+    fn validate_team_score_spain() {
         let scores = build_scores_table(get_results());
         let team = scores.get("Spain").unwrap();
         assert_eq!(team.goals_scored, 0);
